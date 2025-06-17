@@ -1,28 +1,42 @@
-// Import the Google Generative AI SDK
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
-// Initialize the Gemini AI client using the API key from environment variables
-const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
-
 /**
- * Fetches a response from Gemini AI based on the user's prompt.
- * 
- * @param {string} prompt - The user's input text to be sent to Gemini.
- * @returns {Promise<string>} - The generated response text or an error message.
+ * Fetches a text response from Google Gemini AI using the REST API.
+ * This version is compatible with frontend (browser) environments.
+ *
+ * @param {string} prompt - The user's input message to send to Gemini.
+ * @returns {Promise<string>} - The AI-generated text response, or an error message.
  */
 export async function getAIResponse(prompt) {
   try {
-    // Load the specific model version
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    // Retrieve your Gemini API key from environment variables
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
-    // Generate content using the model
-    const result = await model.generateContent(prompt);
+    // Send a POST request to Gemini's REST API endpoint
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [{ text: prompt }],
+            },
+          ],
+        }),
+      }
+    );
 
-    // Extract and return plain text from the response
-    const rawText = result.response.text();
-    return rawText;
+    // Parse the JSON response
+    const data = await response.json();
+
+    // Check and return the generated text if it exists
+    const generatedText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    return generatedText || 'No response received from Gemini.';
   } catch (error) {
-    console.error("Gemini API error:", error);
-    return "Sorry, something went wrong. Please try again.";
+    // Log the error and return a friendly fallback message
+    console.error('Gemini API error:', error);
+    return 'Sorry, something went wrong. Please try again.';
   }
 }
