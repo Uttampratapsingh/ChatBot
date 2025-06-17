@@ -2,7 +2,7 @@
 import { createRoot } from 'react-dom/client';
 
 // Import global CSS
-import './index.css';
+import '../index.css'
 
 // Import the main App component
 import App from './App.jsx';
