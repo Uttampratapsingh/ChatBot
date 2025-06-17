@@ -1,35 +1,47 @@
+// src/utils/aiClient.js
 
 /**
- * Sends the user's prompt to the backend (Vercel Serverless API)
- * and returns the Gemini AI-generated response.
+ * Calls Google Gemini API from frontend using fetch and API key.
+ * Only works in the browser for testing/demo.
  *
- * @param {string} prompt - The user's message
- * @returns {Promise<string>} - AI-generated response
+ * @param {string} prompt - User's message to send to Gemini.
+ * @returns {Promise<string>} - AI response or error message.
  */
 export async function getAIResponse(prompt) {
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+
   try {
-    const response = await fetch('/api/gemini', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt }),
-    });
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: prompt,
+                },
+              ],
+            },
+          ],
+        }),
+      }
+    );
 
-    const text = await response.text(); // Handle even if it's not valid JSON
+    const data = await response.json();
 
-    let data = {};
-    try {
-      data = JSON.parse(text);
-    } catch (e) {
-      console.warn('Non-JSON response:', text);
-    }
+    // Optional logging
+    console.log('Gemini response:', data);
 
-    if (response.ok) {
-      return data?.text || 'No response received.';
-    } else {
-      return data?.error || 'Something went wrong.';
-    }
+    // Return response text
+    const generatedText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    return generatedText || 'No response from Gemini.';
   } catch (error) {
-    console.error('Client Error:', error);
+    console.error('Gemini API error:', error);
     return 'Something went wrong. Please try again.';
   }
 }
