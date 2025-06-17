@@ -4,7 +4,7 @@ This is the **React client** for a full-stack AI-powered chatbot application. It
 
 ---
 
-## 🔗 Live Demo  https://chat-ewmuqs485-uttampratapsinghs-projects.vercel.app
+## 🔗 Live Demo  https://chat-bot-six-sand.vercel.app
 
 
 ## 🚀 Features
