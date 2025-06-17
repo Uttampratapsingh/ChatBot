@@ -1,42 +1,35 @@
+
 /**
- * Fetches a text response from Google Gemini AI using the REST API.
- * This version is compatible with frontend (browser) environments.
+ * Sends the user's prompt to the backend (Vercel Serverless API)
+ * and returns the Gemini AI-generated response.
  *
- * @param {string} prompt - The user's input message to send to Gemini.
- * @returns {Promise<string>} - The AI-generated text response, or an error message.
+ * @param {string} prompt - The user's message
+ * @returns {Promise<string>} - AI-generated response
  */
 export async function getAIResponse(prompt) {
   try {
-    // Retrieve your Gemini API key from environment variables
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    const response = await fetch('/api/gemini', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt }),
+    });
 
-    // Send a POST request to Gemini's REST API endpoint
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [{ text: prompt }],
-            },
-          ],
-        }),
-      }
-    );
+    const text = await response.text(); // Handle even if it's not valid JSON
 
-    // Parse the JSON response
-    const data = await response.json();
+    let data = {};
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      console.warn('Non-JSON response:', text);
+    }
 
-    // Check and return the generated text if it exists
-    const generatedText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    return generatedText || 'No response received from Gemini.';
+    if (response.ok) {
+      return data?.text || 'No response received.';
+    } else {
+      return data?.error || 'Something went wrong.';
+    }
   } catch (error) {
-    // Log the error and return a friendly fallback message
-    console.error('Gemini API error:', error);
-    return 'Sorry, something went wrong. Please try again.';
+    console.error('Client Error:', error);
+    return 'Something went wrong. Please try again.';
   }
 }
